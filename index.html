@@ -1,0 +1,163 @@
+<index.html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>월급루팡 게임</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(to bottom, #87CEEB, #E0F6FF);
+            font-family: 'Arial', sans-serif;
+        }
+        #gameContainer {
+            width: 800px;
+            height: 600px;
+            background-color: #f0f0f0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            border-radius: 10px;
+        }
+        #player {
+            width: 50px;
+            height: 50px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%23FFD700"/><circle cx="35" cy="40" r="5" fill="%23000"/><circle cx="65" cy="40" r="5" fill="%23000"/><path d="M30 70 Q50 80 70 70" stroke="%23000" stroke-width="3" fill="none"/></svg>');
+            background-size: cover;
+            position: absolute;
+            bottom: 20px;
+            left: 375px;
+        }
+        .money {
+            width: 30px;
+            height: 30px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="90" height="60" x="5" y="20" fill="%2300693E" rx="5" ry="5"/><text x="50" y="60" font-size="40" text-anchor="middle" fill="%23FFD700">$</text></svg>');
+            background-size: cover;
+            position: absolute;
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            color: #333;
+        }
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="player"></div>
+        <div id="score">점수: 0</div>
+        <div id="startScreen">
+            <h1>월급루팡 게임</h1>
+            <p>스페이스바를 눌러 시작하세요</p>
+        </div>
+    </div>
+
+    <script>
+        const gameContainer = document.getElementById('gameContainer');
+        const player = document.getElementById('player');
+        const scoreElement = document.getElementById('score');
+        const startScreen = document.getElementById('startScreen');
+
+        let score = 0;
+        let gameActive = false;
+        let playerX = 375;
+        const playerSpeed = 5;
+        const moneySpeed = 2;
+        let moneyIntervalId;
+
+        function startGame() {
+            if (!gameActive) {
+                gameActive = true;
+                score = 0;
+                updateScore();
+                startScreen.style.display = 'none';
+                moneyIntervalId = setInterval(createMoney, 1000);
+            }
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(moneyIntervalId);
+            startScreen.style.display = 'flex';
+            startScreen.innerHTML = `<h1>게임 오버</h1><p>최종 점수: ${score}</p><p>스페이스바를 눌러 재시작하세요</p>`;
+            const moneyElements = document.querySelectorAll('.money');
+            moneyElements.forEach(money => money.remove());
+        }
+
+        function createMoney() {
+            const money = document.createElement('div');
+            money.className = 'money';
+            money.style.left = `${Math.random() * (gameContainer.offsetWidth - 30)}px`;
+            money.style.top = '0px';
+            gameContainer.appendChild(money);
+
+            function moveMoney() {
+                const currentTop = parseFloat(money.style.top);
+                if (currentTop > gameContainer.offsetHeight) {
+                    money.remove();
+                } else {
+                    money.style.top = `${currentTop + moneySpeed}px`;
+                    if (isCollision(player, money)) {
+                        money.remove();
+                        score += 10;
+                        updateScore();
+                    } else {
+                        requestAnimationFrame(moveMoney);
+                    }
+                }
+            }
+
+            moveMoney();
+        }
+
+        function updateScore() {
+            scoreElement.textContent = `점수: ${score}`;
+        }
+
+        function isCollision(a, b) {
+            const aRect = a.getBoundingClientRect();
+            const bRect = b.getBoundingClientRect();
+            return !(
+                aRect.top + aRect.height < bRect.top ||
+                aRect.top > bRect.top + bRect.height ||
+                aRect.left + aRect.width < bRect.left ||
+                aRect.left > bRect.left + bRect.width
+            );
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                startGame();
+            } else if (gameActive) {
+                if (e.key === 'a' && playerX > 0) {
+                    playerX -= playerSpeed;
+                } else if (e.key === 'd' && playerX < gameContainer.offsetWidth - player.offsetWidth) {
+                    playerX += playerSpeed;
+                }
+                player.style.left = `${playerX}px`;
+            }
+        });
+    </script>
+</body>
+</html>
